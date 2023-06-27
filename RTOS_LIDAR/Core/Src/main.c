@@ -683,7 +683,7 @@ void Start_TakeAction_Lidar(void *argument)
 
 		}
 		else if(Flag_Drive==1) {
-      safe_state();
+      safe_state(); //A.hamid 
 
 			LCD_clearScreen(); /* clear the LCD display */
 			LCD_displayString(" ");
@@ -865,7 +865,7 @@ void StartTask06(void *argument)
 				GGA_DATA.time.hour, GGA_DATA.time.minuit, GGA_DATA.time.second, Vehicle_ID,
 				lon, lat,(uint16_t)RMC_DATA.speed_over_gnd, Check_Front_Obs, Global_u16LidarDistance,
 				Left_Distance, Right_Distance,Rear_Distance, D_lon, D_lat);*/
-		int len = snprintf(test_data, sizeof(test_data), "{\n"
+		int len = snprintf(test_data, sizeof(test_data), "{\n" //A.hamid changed id to string + routing command
 				"\"dateandtime\": \"2022-12-07 08:48:00\" ,\n"
 				"\"id\": \"%s\",\n"
 				"\"r_cmd\": %d,\n"
@@ -879,12 +879,12 @@ void StartTask06(void *argument)
 				"\"5\": %s,\n" //dest lon
 				"\"6\": %s\n}" // dest lat
 
-				/*RMC_DATA.date.year, RMC_DATA.date.month, RMC_DATA.date.day,
+				/*,RMC_DATA.date.year, RMC_DATA.date.month, RMC_DATA.date.day,
 				GGA_DATA.time.hour, GGA_DATA.time.minuit, GGA_DATA.time.second*/, Vehicle_ID, Routing_command,
 				/*lon, lat,*/(uint16_t)RMC_DATA.speed_over_gnd, Check_Front_Obs, Global_u16LidarDistance,
 				Left_Distance, Right_Distance, D_lon, D_lat);
 
-		if(Routing_command == 1){
+		if(Routing_command == 1){ //A.hamid 
 			Routing_command=0;
 		}else{}
 
@@ -943,6 +943,9 @@ void Start_Rec_Transmit(void *argument)
 			rx_data[strcspn(rx_data, "\r\n")] = '\0';
 			rx_data[strcspn(rx_data, "\r\n")] = '\0';
 
+      //A.hamid split into 2 catgories warning and direction, states are defined in functions 
+      // changed strcmp to str str
+      // not tested!
 
 			/*warning states*/
 			if (strstr(rx_data, "Warning") == 0)
@@ -972,7 +975,7 @@ void Start_Rec_Transmit(void *argument)
 		}	}
   /* USER CODE END Start_Rec_Transmit */
 }
-void warning_state(void){
+void warning_state(void){//A.hamid 
 				blink_color = 4; // Red
 //				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 //				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
@@ -995,7 +998,7 @@ void warning_state(void){
 				// osDelay(1000);
 
 }
-void safe_state(void){
+void safe_state(void){//A.hamid 
 
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
 //				memset((rx_data), '\0', strlen(rx_data));
@@ -1004,7 +1007,7 @@ void safe_state(void){
 				LCD_displayString(" ");
 }
 
-void breaking_state(void){
+void breaking_state(void){//A.hamid 
 
     LCD_clearScreen(); /* clear the LCD display */
     LCD_displayString(" ");
@@ -1020,7 +1023,7 @@ void left_state(void){
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, SET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
+//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
 				memset((rx_data), '\0', strlen(rx_data));
 
 				LCD_clearScreen(); /* clear the LCD display */
@@ -1034,7 +1037,7 @@ void right_state(void){
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
+//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
 				memset((rx_data), '\0', strlen(rx_data));
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
@@ -1049,7 +1052,7 @@ void straight_state(void){
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, SET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
+//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
 				memset((rx_data), '\0', strlen(rx_data));
 
 				LCD_clearScreen(); /* clear the LCD display */
