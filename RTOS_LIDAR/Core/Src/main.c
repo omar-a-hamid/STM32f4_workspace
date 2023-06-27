@@ -931,6 +931,8 @@ void Start_Rec_Transmit(void *argument)
 			rx_data[strcspn(rx_data, "\r\n")] = '\0';
 			rx_data[strcspn(rx_data, "\r\n")] = '\0';
 
+
+			/*warning states*/
 			if (strstr(rx_data, "Warning") == 0)
 			{
 				blink_color = 4; // Red
@@ -955,6 +957,7 @@ void Start_Rec_Transmit(void *argument)
 			}else{
 
 			}
+			/*directions*/
 			if (strstr(rx_data, "Right") == 0)
 			{
 				blink_color = 1; // Green
