@@ -34,6 +34,18 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+//A.hamid 
+typedef enum driving_states{
+
+SAFE,
+WARNING,
+BRAKING,
+LEFT,
+RIGHT,
+STRAIGHT
+
+
+}driving_states;
 
 /* USER CODE END PTD */
 
@@ -116,6 +128,10 @@ RMC_STRUCT RMC_DATA;
 int Flag=0;
 char str_GGA[50];
 char str_RMC[100];
+
+
+driving_states vehicle_state=SAFE;    //A.hamid 
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -854,7 +870,7 @@ void StartTask06(void *argument)
 
 		/*int len = snprintf(test_data, sizeof(test_data), "{\n"
 				"\"dateandtime\": \"%d-%d-%d %d:%d:%d\" ,\n"
-				"\"vehicle id\": %d,\n"
+				"\"vehicle id\": %,\n"
 				"\"current lon\": %s,\n"
 				"\"current lat\": %s,\n"
 				"\"spdK/m\": %d,\n"
@@ -882,12 +898,13 @@ void StartTask06(void *argument)
 				"\"3\": %lu,\n" // left distance
 				"\"4\" :%lu,\n"//right
 				"\"5\": %s,\n" //dest lon
-				"\"6\": %s\n}" // dest lat
+				"\"6\": %s\n"
+        "\"action\": %d\n}" // dest lat
 
 				/*,RMC_DATA.date.year, RMC_DATA.date.month, RMC_DATA.date.day,
 				GGA_DATA.time.hour, GGA_DATA.time.minuit, GGA_DATA.time.second*/, Vehicle_ID, Routing_command,
 				/*lon, lat,*/(uint16_t)RMC_DATA.speed_over_gnd, Check_Front_Obs, Global_u16LidarDistance,
-				Left_Distance, Right_Distance, D_lon, D_lat);
+				Left_Distance, Right_Distance, D_lon, D_lat,vehicle_state);
 
 		if(Routing_command == 1){ //A.hamid 
 			Routing_command=0;
@@ -973,8 +990,11 @@ void Start_Rec_Transmit(void *argument)
 			else if (strstr(rx_data, "Straight") == 0)
 			{
         straight_state();
-			}else{}
+			}else{
 
+      }
+
+      memset((rx_data), '\0', strlen(rx_data)); //A.hamid  // delete all buffer after reading
 
 			Flag_Rec=0;
 		}	}
@@ -983,9 +1003,10 @@ void Start_Rec_Transmit(void *argument)
 //A.hamid 
 void warning_state(void){//A.hamid 
 				blink_color = 4; // Red
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
+        vehicle_state=WARNING;
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
 
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
@@ -998,22 +1019,24 @@ void warning_state(void){//A.hamid
         }
 
 
-//				memset((rx_data), '\0', strlen(rx_data));
+				// memset((rx_data), '\0', strlen(rx_data));
 
 
 				// osDelay(1000);
 
 }
 void safe_state(void){//A.hamid 
-
+        vehicle_state=SAFE;
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
-//				memset((rx_data), '\0', strlen(rx_data));
+				// memset((rx_data), '\0', strlen(rx_data));
 
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
 }
 
 void breaking_state(void){//A.hamid 
+    
+    vehicle_state=BRAKING;
 
     LCD_clearScreen(); /* clear the LCD display */
     LCD_displayString(" ");
@@ -1025,12 +1048,15 @@ void breaking_state(void){//A.hamid
 
 }
 void left_state(void){
+
+        vehicle_state=LEFT;//A.hamid 
+
 				blink_color = 2; // Yellow
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, SET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
-				memset((rx_data), '\0', strlen(rx_data));
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
+				// memset((rx_data), '\0', strlen(rx_data)); // delete all buffer after reading
 
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
@@ -1038,13 +1064,13 @@ void left_state(void){
 
 }
 void right_state(void){
-
+        vehicle_state=RIGHT;
 				blink_color = 1; // Green
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
 //				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
-				memset((rx_data), '\0', strlen(rx_data));
+				// memset((rx_data), '\0', strlen(rx_data)); // delete all buffer after reading
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
 				LCD_displayStringRowColumn(1,3,"Turn Right");
@@ -1054,12 +1080,13 @@ void right_state(void){
 }
 void straight_state(void){
 
-  				blink_color = 3; // Blue
+        vehicle_state=STRAIGHT;
+        blink_color = 3; // Blue
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, SET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
-				memset((rx_data), '\0', strlen(rx_data));
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
+				// memset((rx_data), '\0', strlen(rx_data));  // delete all buffer after reading
 
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
