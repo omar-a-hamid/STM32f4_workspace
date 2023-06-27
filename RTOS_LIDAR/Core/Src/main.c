@@ -47,6 +47,16 @@ STRAIGHT
 
 }driving_states;
 
+typedef enum direction_states{
+
+
+LEFT,
+RIGHT,
+STRAIGHT
+
+
+}direction_states;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -131,6 +141,7 @@ char str_RMC[100];
 
 
 driving_states vehicle_state=SAFE;    //A.hamid 
+direction_states vehicle_direction=STRAIGHT;
 
 /* USER CODE END PV */
 
@@ -887,24 +898,25 @@ void StartTask06(void *argument)
 				lon, lat,(uint16_t)RMC_DATA.speed_over_gnd, Check_Front_Obs, Global_u16LidarDistance,
 				Left_Distance, Right_Distance,Rear_Distance, D_lon, D_lat);*/
 		int len = snprintf(test_data, sizeof(test_data), "{\n" //A.hamid changed id to string + routing command
-				"\"dateandtime\": \"2022-12-07 08:48:00\" ,\n"
+				"\"dateandtime\": \"2022-12-07 08:48:00\" ,\n"  //TODO:  turn on gps
 				"\"id\": \"%s\",\n"
 				"\"r_cmd\": %d,\n"
-				"\"clon\": 31.338135,\n"
-				"\"clat\": 30.056193,\n"
+				"\"clon\": 31.338135,\n"                        //TODO:  turn on gps
+				"\"clat\": 30.056193,\n"                        //TODO:  turn on gps
 				"\"spdK/m\": %d,\n"
 				"\"1\": %d,\n"//obs flag
 				"\"2\": %d,\n"//obs distance
 				"\"3\": %lu,\n" // left distance
 				"\"4\" :%lu,\n"//right
 				"\"5\": %s,\n" //dest lon
-				"\"6\": %s\n"
-        "\"action\": %d\n}" // dest lat
+				"\"6\": %s,\n"
+        "\"state\": %d,\n"
+        "\"direction\": %d\n}" // dest lat                 //TEST
 
 				/*,RMC_DATA.date.year, RMC_DATA.date.month, RMC_DATA.date.day,
 				GGA_DATA.time.hour, GGA_DATA.time.minuit, GGA_DATA.time.second*/, Vehicle_ID, Routing_command,
 				/*lon, lat,*/(uint16_t)RMC_DATA.speed_over_gnd, Check_Front_Obs, Global_u16LidarDistance,
-				Left_Distance, Right_Distance, D_lon, D_lat,vehicle_state);
+				Left_Distance, Right_Distance, D_lon, D_lat,vehicle_state,vehicle_direction);
 
 		if(Routing_command == 1){ //A.hamid 
 			Routing_command=0;
@@ -1049,7 +1061,7 @@ void breaking_state(void){//A.hamid
 }
 void left_state(void){
 
-        vehicle_state=LEFT;//A.hamid 
+        vehicle_direction=LEFT;//A.hamid 
 
 				blink_color = 2; // Yellow
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
@@ -1064,7 +1076,7 @@ void left_state(void){
 
 }
 void right_state(void){
-        vehicle_state=RIGHT;
+        vehicle_direction=RIGHT;
 				blink_color = 1; // Green
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
@@ -1080,7 +1092,7 @@ void right_state(void){
 }
 void straight_state(void){
 
-        vehicle_state=STRAIGHT;
+        vehicle_direction=STRAIGHT;
         blink_color = 3; // Blue
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
