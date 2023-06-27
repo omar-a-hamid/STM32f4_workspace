@@ -1,0 +1,10 @@
+LCD.c:26:6:LCD_init	1
+LCD.c:50:6:LCD_sendCommand	1
+LCD.c:107:6:LCD_displayCharacter	1
+LCD.c:164:6:LCD_displayString	2
+LCD.c:185:6:LCD_moveCursor	5
+LCD.c:213:6:LCD_displayStringRowColumn	1
+LCD.c:223:6:LCD_intgerToString	1
+LCD.c:234:6:LCD_clearScreen	1
+LCD.c:238:6:writePort_8bit	1
+LCD.c:251:6:writePort_4bit	1
