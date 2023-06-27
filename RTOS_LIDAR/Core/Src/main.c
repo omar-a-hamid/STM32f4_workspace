@@ -134,6 +134,12 @@ void StartTask06(void *argument);
 void Start_Rec_Transmit(void *argument);
 
 /* USER CODE BEGIN PFP */
+void warning_state(void);
+void breaking_state(void);
+void left_state(void);
+void right_state(void);
+
+
 
 /* USER CODE END PFP */
 
@@ -660,6 +666,8 @@ void Start_TakeAction_Lidar(void *argument)
 		if (Flag_obstacle == 1)
 		{
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14,SET);
+      breaking_state();       //A.hamid
+
 			LCD_clearScreen(); /* clear the LCD display */
 			LCD_displayString(" ");
 			LCD_displayStringRowColumn(0,0,"Applying Brakes");
@@ -668,15 +676,19 @@ void Start_TakeAction_Lidar(void *argument)
 			if(Global_u16LidarDistance >=101)
 			{
 				Flag_Drive=1;
+
 			}
 			Flag_obstacle=0;
 			osDelay(200);
 
 		}
 		else if(Flag_Drive==1) {
+      safe_state();
+
 			LCD_clearScreen(); /* clear the LCD display */
 			LCD_displayString(" ");
 			LCD_displayStringRowColumn(0,0,"Drive Mode");
+
 			Flag_Drive=0;
 			osDelay(20);
 		}
@@ -935,31 +947,89 @@ void Start_Rec_Transmit(void *argument)
 			/*warning states*/
 			if (strstr(rx_data, "Warning") == 0)
 			{
+        warning_state();
+
+			}else if(strstr(rx_data, "Safe") == 0){
+
+        safe_state();
+      }else{}
+			/*directions*/
+			if (strstr(rx_data, "Right") == 0)
+			{
+        right_state();
+			}
+			else if( strstr(rx_data, "Left") == 0)
+			{
+        left_state();
+			}
+			else if (strstr(rx_data, "Straight") == 0)
+			{
+        straight_state();
+			}else{}
+
+
+			Flag_Rec=0;
+		}	}
+  /* USER CODE END Start_Rec_Transmit */
+}
+void warning_state(void){
 				blink_color = 4; // Red
 //				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 //				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
 //				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
-//				memset((rx_data), '\0', strlen(rx_data));
 
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
 				LCD_displayStringRowColumn(1,3,"Warning!!");
-				osDelay(1000);
-			}else if(strstr(rx_data, "Safe") == 0){
+        for(int i=0; i<5 ; i++){
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
+				osDelay(300);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
+        osDelay(300);
+        }
+
+
+//				memset((rx_data), '\0', strlen(rx_data));
+
+
+				// osDelay(1000);
+
+}
+void safe_state(void){
 
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
 //				memset((rx_data), '\0', strlen(rx_data));
 
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
+}
 
-			}else{
+void breaking_state(void){
 
-			}
-			/*directions*/
-			if (strstr(rx_data, "Right") == 0)
-			{
+    LCD_clearScreen(); /* clear the LCD display */
+    LCD_displayString(" ");
+    LCD_displayStringRowColumn(1,3,"Break!!");
+
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
+
+
+
+}
+void left_state(void){
+				blink_color = 2; // Yellow
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, SET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
+//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
+				memset((rx_data), '\0', strlen(rx_data));
+
+				LCD_clearScreen(); /* clear the LCD display */
+				LCD_displayString(" ");
+				LCD_displayStringRowColumn(1,3,"Turn Left");
+
+}
+void right_state(void){
+
 				blink_color = 1; // Green
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
@@ -972,23 +1042,10 @@ void Start_Rec_Transmit(void *argument)
 
 
 
-			}
-			else if( strstr(rx_data, "Left") == 0)
-			{
-				blink_color = 2; // Yellow
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, SET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
-				memset((rx_data), '\0', strlen(rx_data));
+}
+void straight_state(void){
 
-				LCD_clearScreen(); /* clear the LCD display */
-				LCD_displayString(" ");
-				LCD_displayStringRowColumn(1,3,"Turn Left");
-			}
-			else if (strstr(rx_data, "Straight") == 0)
-			{
-				blink_color = 3; // Blue
+  				blink_color = 3; // Blue
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, SET);
@@ -999,12 +1056,6 @@ void Start_Rec_Transmit(void *argument)
 				LCD_displayString(" ");
 				LCD_displayStringRowColumn(1,3,"Go Straight");
 
-			}
-
-
-			Flag_Rec=0;
-		}	}
-  /* USER CODE END Start_Rec_Transmit */
 }
 
 /**
@@ -1020,6 +1071,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   /* Prevent unused argument(s) compilation warning */
 //  UNUSED(GPIO_Pin);
 	if(Routing_command==0){
+		osDelay(20);
 		Routing_command=1;
 	}
 
