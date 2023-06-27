@@ -136,8 +136,12 @@ void Start_Rec_Transmit(void *argument);
 /* USER CODE BEGIN PFP */
 void warning_state(void);
 void breaking_state(void);
+void straight_state(void);
+
+
 void left_state(void);
 void right_state(void);
+void safe_state(void);
 
 
 
@@ -975,6 +979,7 @@ void Start_Rec_Transmit(void *argument)
 		}	}
   /* USER CODE END Start_Rec_Transmit */
 }
+//A.hamid 
 void warning_state(void){//A.hamid 
 				blink_color = 4; // Red
 //				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
