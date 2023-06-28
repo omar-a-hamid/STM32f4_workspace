@@ -72,13 +72,10 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
-UART_HandleTypeDef huart6;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart3_tx;
 DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart6_rx;
-DMA_HandleTypeDef hdma_usart6_tx;
 
 /* Definitions for LidarREAD */
 osThreadId_t LidarREADHandle;
@@ -153,7 +150,6 @@ static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
-static void MX_USART6_UART_Init(void);
 void StartLidarREAD(void *argument);
 void Start_TakeAction_Lidar(void *argument);
 void Start_Ultrasonic_Read(void *argument);
@@ -183,7 +179,7 @@ extern uint16_t Global_u16LidarDistance;
 extern uint32_t Rear_Distance;
 extern uint32_t Left_Distance;
 extern uint32_t Right_Distance;
-char test_data[500];
+char test_data[450];
 const char Vehicle_ID[]= "A12";
 int Routing_command=0;
 float Destination_Longitude=31.3488351;
@@ -207,14 +203,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 		/* start the DMA again */
 		HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *) RxBuf, RxBuf_SIZE);
 		__HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
-	}
-	if (huart->Instance == USART6)//A.Hamid
-	{
-		Flag_Rec=1;
-		/* start the DMA again */
-		HAL_UARTEx_ReceiveToIdle_DMA(&huart6, (uint8_t *) rx_data, sizeof(rx_data));
-		__HAL_DMA_DISABLE_IT(&hdma_usart6_rx, DMA_IT_HT);
-
 	}
 	if (huart->Instance == USART3)
 	{
@@ -263,7 +251,6 @@ int main(void)
   MX_TIM1_Init();
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
-  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 	HAL_UARTEx_ReceiveToIdle_DMA(&huart2, RxBuf, RxBuf_SIZE);
 	__HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
@@ -552,39 +539,6 @@ static void MX_USART3_UART_Init(void)
 }
 
 /**
-  * @brief USART6 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART6_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART6_Init 0 */
-
-  /* USER CODE END USART6_Init 0 */
-
-  /* USER CODE BEGIN USART6_Init 1 */
-
-  /* USER CODE END USART6_Init 1 */
-  huart6.Instance = USART6;
-  huart6.Init.BaudRate = 115200;
-  huart6.Init.WordLength = UART_WORDLENGTH_8B;
-  huart6.Init.StopBits = UART_STOPBITS_1;
-  huart6.Init.Parity = UART_PARITY_NONE;
-  huart6.Init.Mode = UART_MODE_TX_RX;
-  huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart6.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart6) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART6_Init 2 */
-
-  /* USER CODE END USART6_Init 2 */
-
-}
-
-/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -604,15 +558,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
-  /* DMA2_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-  /* DMA2_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);
 
 }
 
@@ -685,7 +633,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 7, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -712,11 +660,11 @@ void warning_state(void){//A.hamid
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
 				LCD_displayStringRowColumn(1,3,"Warning!!");
-        for(int i=0; i<5 ; i++){
+        for(int i=0; i<3 ; i++){
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
-				osDelay(300);
+				osDelay(100);
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
-        osDelay(300);
+				osDelay(100);
         }
 
 
@@ -1060,7 +1008,7 @@ void StartTask06(void *argument)
 				"\"5\": %s,\n" //dest lon
 				"\"6\": %s,\n"
         "\"state\": %d,\n"
-        "\"direction\": %d\n}" // dest lat                 //TEST
+        "\"direction\": %d\n}\n" // dest lat                 //TEST
 
 				/*,RMC_DATA.date.year, RMC_DATA.date.month, RMC_DATA.date.day,
 				GGA_DATA.time.hour, GGA_DATA.time.minuit, GGA_DATA.time.second*/, Vehicle_ID, Routing_command,
@@ -1093,7 +1041,7 @@ void StartTask06(void *argument)
 		if (len < 0 || len >= sizeof(test_data)) {
 			// handle error
 		} else {
-			HAL_StatusTypeDef status = HAL_UART_Transmit_DMA(&huart6, (uint8_t*)test_data, sizeof(test_data));
+			HAL_StatusTypeDef status = HAL_UART_Transmit_DMA(&huart3, (uint8_t*)test_data, sizeof(test_data));
 			//HAL_Delay(100);
 			if (status != HAL_OK) {
 				// handle error
@@ -1102,7 +1050,7 @@ void StartTask06(void *argument)
 			}
 		}
 
-		osDelay(1000);
+		osDelay(2500); //A.Hamid
 	}
   /* USER CODE END StartTask06 */
 }
@@ -1118,6 +1066,7 @@ void Start_Rec_Transmit(void *argument)
 {
   /* USER CODE BEGIN Start_Rec_Transmit */
 	/* Infinite loop */
+	char temp_buffer[20] ={'\0'};
 	for(;;)
 	{
 
@@ -1125,43 +1074,47 @@ void Start_Rec_Transmit(void *argument)
 		{
 			rx_data[strcspn(rx_data, "\r\n")] = '\0';
 			rx_data[strcspn(rx_data, "\r\n")] = '\0';
+//			temp_buffer[20] = rx_data;
+			strncpy(temp_buffer, rx_data, strlen(rx_data));
+			memset((rx_data), '\0', strlen(rx_data)); //A.hamid  // delete all buffer after reading
 
       //A.hamid split into 2 catgories warning and direction, states are defined in functions 
       // changed strcmp to str str
       // not tested!
 
 			/*warning states*/
-			if (strstr(rx_data, "Warning") == 0)
-			{
-        warning_state();
 
-			}else if(strstr(rx_data, "Safe") == 0){
-
-        safe_state();
-      }else{}
 			/*directions*/
-			if (strstr(rx_data, "Right") == 0)
+//			if (strstr(temp_buffer, "Right"))
+			if (strstr(temp_buffer, "R"))
 			{
         right_state();
 			}
-			else if( strstr(rx_data, "Left") == 0)
+//			else if( strstr(temp_buffer, "Left"))
+			else if (strstr(temp_buffer, "L"))
 			{
         left_state();
 			}
-			else if (strstr(rx_data, "Straight") == 0)
+//			else if (strstr(temp_buffer, "Straight"))
+			else if (strstr(temp_buffer, "S"))
 			{
         straight_state();
-			}else{
-				straight_state();
-      }
+			}else{}
+			if (strstr(temp_buffer, "W"))
+			{
+					warning_state();
 
-      memset((rx_data), '\0', strlen(rx_data)); //A.hamid  // delete all buffer after reading
+			}else if(strstr(temp_buffer, "N")){
+
+				safe_state();
+      }else{}
+
+      memset((temp_buffer), '\0', strlen(temp_buffer)); //A.hamid  // delete all buffer after reading
 
 			Flag_Rec=0;
 		}	}
   /* USER CODE END Start_Rec_Transmit */
 }
-
 
 /**
   * @brief  Period elapsed callback in non blocking mode
@@ -1171,7 +1124,6 @@ void Start_Rec_Transmit(void *argument)
   * @param  htim : TIM handle
   * @retval None
   */
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
