@@ -40,19 +40,16 @@ typedef enum driving_states{
 SAFE,
 WARNING,
 BRAKING,
-LEFT,
-RIGHT,
-STRAIGHT
 
 
 }driving_states;
 
 typedef enum direction_states{
 
-
+STRAIGHT,
 LEFT,
-RIGHT,
-STRAIGHT
+RIGHT
+
 
 
 }direction_states;
@@ -75,10 +72,13 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+UART_HandleTypeDef huart6;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart2_rx;
 DMA_HandleTypeDef hdma_usart3_tx;
 DMA_HandleTypeDef hdma_usart3_rx;
+DMA_HandleTypeDef hdma_usart6_rx;
+DMA_HandleTypeDef hdma_usart6_tx;
 
 /* Definitions for LidarREAD */
 osThreadId_t LidarREADHandle;
@@ -153,6 +153,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
+static void MX_USART6_UART_Init(void);
 void StartLidarREAD(void *argument);
 void Start_TakeAction_Lidar(void *argument);
 void Start_Ultrasonic_Read(void *argument);
@@ -189,7 +190,7 @@ float Destination_Longitude=31.3488351;
 float Destination_Latitude=30.0591282;
 int Check_Front_Obs=0;
 
-char rx_data[10];
+char rx_data[20]; //A.Hamid TEST
 int Flag_Rec =0;
 int Flag_obstacle=0;
 int Flag_Drive=0;
@@ -206,6 +207,14 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 		/* start the DMA again */
 		HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *) RxBuf, RxBuf_SIZE);
 		__HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+	}
+	if (huart->Instance == USART6)//A.Hamid
+	{
+		Flag_Rec=1;
+		/* start the DMA again */
+		HAL_UARTEx_ReceiveToIdle_DMA(&huart6, (uint8_t *) rx_data, sizeof(rx_data));
+		__HAL_DMA_DISABLE_IT(&hdma_usart6_rx, DMA_IT_HT);
+
 	}
 	if (huart->Instance == USART3)
 	{
@@ -254,6 +263,7 @@ int main(void)
   MX_TIM1_Init();
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 	HAL_UARTEx_ReceiveToIdle_DMA(&huart2, RxBuf, RxBuf_SIZE);
 	__HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
@@ -542,6 +552,39 @@ static void MX_USART3_UART_Init(void)
 }
 
 /**
+  * @brief USART6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART6_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART6_Init 0 */
+
+  /* USER CODE END USART6_Init 0 */
+
+  /* USER CODE BEGIN USART6_Init 1 */
+
+  /* USER CODE END USART6_Init 1 */
+  huart6.Instance = USART6;
+  huart6.Init.BaudRate = 115200;
+  huart6.Init.WordLength = UART_WORDLENGTH_8B;
+  huart6.Init.StopBits = UART_STOPBITS_1;
+  huart6.Init.Parity = UART_PARITY_NONE;
+  huart6.Init.Mode = UART_MODE_TX_RX;
+  huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart6.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART6_Init 2 */
+
+  /* USER CODE END USART6_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -561,9 +604,15 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+  /* DMA2_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  /* DMA2_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);
 
 }
 
@@ -644,7 +693,107 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+//A.hamid
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  /* Prevent unused argument(s) compilation warning */
+//  UNUSED(GPIO_Pin);
+	if(Routing_command==0){
+		osDelay(20);
+		Routing_command=1;
+	}}
+void warning_state(void){//A.hamid
+				blink_color = 4; // Red
+        vehicle_state=WARNING;
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
 
+				LCD_clearScreen(); /* clear the LCD display */
+				LCD_displayString(" ");
+				LCD_displayStringRowColumn(1,3,"Warning!!");
+        for(int i=0; i<5 ; i++){
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
+				osDelay(300);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
+        osDelay(300);
+        }
+
+
+				// memset((rx_data), '\0', strlen(rx_data));
+
+
+				// osDelay(1000);
+
+}
+void safe_state(void){//A.hamid
+        vehicle_state=SAFE;
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
+				// memset((rx_data), '\0', strlen(rx_data));
+
+				LCD_clearScreen(); /* clear the LCD display */
+				LCD_displayString(" ");
+}
+
+void breaking_state(void){//A.hamid
+
+    vehicle_state=BRAKING;
+
+    LCD_clearScreen(); /* clear the LCD display */
+    LCD_displayString(" ");
+    LCD_displayStringRowColumn(1,3,"Break!!");
+
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
+
+
+
+}
+void left_state(void){
+
+        vehicle_direction=LEFT;//A.hamid
+
+				blink_color = 2; // Yellow
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, SET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid
+				// memset((rx_data), '\0', strlen(rx_data)); // delete all buffer after reading
+
+				LCD_clearScreen(); /* clear the LCD display */
+				LCD_displayString(" ");
+				LCD_displayStringRowColumn(1,3,"Turn Left");
+
+}
+void right_state(void){
+        vehicle_direction=RIGHT;
+				blink_color = 1; // Green
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
+//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid
+				// memset((rx_data), '\0', strlen(rx_data)); // delete all buffer after reading
+				LCD_clearScreen(); /* clear the LCD display */
+				LCD_displayString(" ");
+				LCD_displayStringRowColumn(1,3,"Turn Right");
+
+
+
+}
+void straight_state(void){
+
+        vehicle_direction=STRAIGHT;
+        blink_color = 3; // Blue
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, SET);
+				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid
+				// memset((rx_data), '\0', strlen(rx_data));  // delete all buffer after reading
+
+				LCD_clearScreen(); /* clear the LCD display */
+				LCD_displayString(" ");
+				LCD_displayStringRowColumn(1,3,"Go Straight");
+
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartLidarREAD */
@@ -698,7 +847,7 @@ void Start_TakeAction_Lidar(void *argument)
 		if (Flag_obstacle == 1)
 		{
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14,SET);
-      breaking_state();       //A.hamid
+			breaking_state();       //A.hamid
 
 			LCD_clearScreen(); /* clear the LCD display */
 			LCD_displayString(" ");
@@ -944,7 +1093,7 @@ void StartTask06(void *argument)
 		if (len < 0 || len >= sizeof(test_data)) {
 			// handle error
 		} else {
-			HAL_StatusTypeDef status = HAL_UART_Transmit_DMA(&huart3, (uint8_t*)test_data, sizeof(test_data));
+			HAL_StatusTypeDef status = HAL_UART_Transmit_DMA(&huart6, (uint8_t*)test_data, sizeof(test_data));
 			//HAL_Delay(100);
 			if (status != HAL_OK) {
 				// handle error
@@ -1003,7 +1152,7 @@ void Start_Rec_Transmit(void *argument)
 			{
         straight_state();
 			}else{
-
+				straight_state();
       }
 
       memset((rx_data), '\0', strlen(rx_data)); //A.hamid  // delete all buffer after reading
@@ -1012,99 +1161,7 @@ void Start_Rec_Transmit(void *argument)
 		}	}
   /* USER CODE END Start_Rec_Transmit */
 }
-//A.hamid 
-void warning_state(void){//A.hamid 
-				blink_color = 4; // Red
-        vehicle_state=WARNING;
-				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
-				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
-				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
 
-				LCD_clearScreen(); /* clear the LCD display */
-				LCD_displayString(" ");
-				LCD_displayStringRowColumn(1,3,"Warning!!");
-        for(int i=0; i<5 ; i++){
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
-				osDelay(300);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
-        osDelay(300);
-        }
-
-
-				// memset((rx_data), '\0', strlen(rx_data));
-
-
-				// osDelay(1000);
-
-}
-void safe_state(void){//A.hamid 
-        vehicle_state=SAFE;
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
-				// memset((rx_data), '\0', strlen(rx_data));
-
-				LCD_clearScreen(); /* clear the LCD display */
-				LCD_displayString(" ");
-}
-
-void breaking_state(void){//A.hamid 
-    
-    vehicle_state=BRAKING;
-
-    LCD_clearScreen(); /* clear the LCD display */
-    LCD_displayString(" ");
-    LCD_displayStringRowColumn(1,3,"Break!!");
-
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
-
-
-
-}
-void left_state(void){
-
-        vehicle_direction=LEFT;//A.hamid 
-
-				blink_color = 2; // Yellow
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, SET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
-				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
-				// memset((rx_data), '\0', strlen(rx_data)); // delete all buffer after reading
-
-				LCD_clearScreen(); /* clear the LCD display */
-				LCD_displayString(" ");
-				LCD_displayStringRowColumn(1,3,"Turn Left");
-
-}
-void right_state(void){
-        vehicle_direction=RIGHT;
-				blink_color = 1; // Green
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
-//				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
-				// memset((rx_data), '\0', strlen(rx_data)); // delete all buffer after reading
-				LCD_clearScreen(); /* clear the LCD display */
-				LCD_displayString(" ");
-				LCD_displayStringRowColumn(1,3,"Turn Right");
-
-
-
-}
-void straight_state(void){
-
-        vehicle_direction=STRAIGHT;
-        blink_color = 3; // Blue
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, SET);
-				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);  //A.hamid 
-				// memset((rx_data), '\0', strlen(rx_data));  // delete all buffer after reading
-
-				LCD_clearScreen(); /* clear the LCD display */
-				LCD_displayString(" ");
-				LCD_displayStringRowColumn(1,3,"Go Straight");
-
-}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
@@ -1114,20 +1171,7 @@ void straight_state(void){
   * @param  htim : TIM handle
   * @retval None
   */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  /* Prevent unused argument(s) compilation warning */
-//  UNUSED(GPIO_Pin);
-	if(Routing_command==0){
-		osDelay(20);
-		Routing_command=1;
-	}
 
-
-  /* NOTE: This function Should not be modified, when the callback is needed,
-           the HAL_GPIO_EXTI_Callback could be implemented in the user file
-   */
-}
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
