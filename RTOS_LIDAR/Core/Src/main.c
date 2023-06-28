@@ -34,7 +34,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-//A.hamid 
+//A.hamid create 2 states for vehivles representing moving direction and safety level
 typedef enum driving_states{
 
 SAFE,
@@ -158,7 +158,7 @@ void StartTask06(void *argument);
 void Start_Rec_Transmit(void *argument);
 
 /* USER CODE BEGIN PFP */
-//A.hamid 
+//A.hamid states functions turns ono and off leds and lcds
 void warning_state(void);
 void breaking_state(void);
 void straight_state(void);
@@ -186,7 +186,7 @@ float Destination_Longitude=31.3488351;
 float Destination_Latitude=30.0591282;
 int Check_Front_Obs=0;
 
-char rx_data[20]; //A.Hamid TEST
+char rx_data[20]; //A.Hamid TEST increased  size, can be reduced again
 int Flag_Rec =0;
 int Flag_obstacle=0;
 int Flag_Drive=0;
@@ -641,7 +641,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-//A.hamid
+//A.hamid call back to set routing to 1, after tx it is set to 0
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   /* Prevent unused argument(s) compilation warning */
@@ -795,7 +795,7 @@ void Start_TakeAction_Lidar(void *argument)
 		if (Flag_obstacle == 1)
 		{
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14,SET);
-			breaking_state();       //A.hamid
+			breaking_state();       //A.hamid you use it also with leds in demo?
 
 			LCD_clearScreen(); /* clear the LCD display */
 			LCD_displayString(" ");
@@ -994,7 +994,7 @@ void StartTask06(void *argument)
 				GGA_DATA.time.hour, GGA_DATA.time.minuit, GGA_DATA.time.second, Vehicle_ID,
 				lon, lat,(uint16_t)RMC_DATA.speed_over_gnd, Check_Front_Obs, Global_u16LidarDistance,
 				Left_Distance, Right_Distance,Rear_Distance, D_lon, D_lat);*/
-		int len = snprintf(test_data, sizeof(test_data), "{\n" //A.hamid changed id to string + routing command
+		int len = snprintf(test_data, sizeof(test_data), "{\n" //A.hamid changed id to string + routing command added state and direction
 				"\"dateandtime\": \"2022-12-07 08:48:00\" ,\n"  //TODO:  turn on gps
 				"\"id\": \"%s\",\n"
 				"\"r_cmd\": %d,\n"
@@ -1015,7 +1015,7 @@ void StartTask06(void *argument)
 				/*lon, lat,*/(uint16_t)RMC_DATA.speed_over_gnd, Check_Front_Obs, Global_u16LidarDistance,
 				Left_Distance, Right_Distance, D_lon, D_lat,vehicle_state,vehicle_direction);
 
-		if(Routing_command == 1){ //A.hamid 
+		if(Routing_command == 1){ //A.hamid reset routing command after 1 transmotion
 			Routing_command=0;
 		}else{}
 
@@ -1050,7 +1050,7 @@ void StartTask06(void *argument)
 			}
 		}
 
-		osDelay(2500); //A.Hamid
+		osDelay(5000); //A.Hamid mqtt crashes with high amounts of msgs
 	}
   /* USER CODE END StartTask06 */
 }
@@ -1076,10 +1076,11 @@ void Start_Rec_Transmit(void *argument)
 			rx_data[strcspn(rx_data, "\r\n")] = '\0';
 //			temp_buffer[20] = rx_data;
 			strncpy(temp_buffer, rx_data, strlen(rx_data));
-			memset((rx_data), '\0', strlen(rx_data)); //A.hamid  // delete all buffer after reading
+			memset((rx_data), '\0', strlen(rx_data)); 	//A.hamid  data gets corrupted mid way \
+														// DMA buffers are not safe as data is not blocked from changing
 
       //A.hamid split into 2 catgories warning and direction, states are defined in functions 
-      // changed strcmp to str str
+      // changed strcmp to str str, to detect direction and safety in single msg
       // not tested!
 
 			/*warning states*/
