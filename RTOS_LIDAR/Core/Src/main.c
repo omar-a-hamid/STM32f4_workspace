@@ -119,6 +119,13 @@ const osThreadAttr_t Rec_Data_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for LED_task */
+osThreadId_t LED_taskHandle;
+const osThreadAttr_t LED_task_attributes = {
+  .name = "LED_task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 #define RxBuf_SIZE 800
 
@@ -139,7 +146,7 @@ char str_RMC[100];
 
 driving_states vehicle_state=SAFE;    //A.hamid 
 direction_states vehicle_direction=STRAIGHT;
-
+//A.Hamid added Task07
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -156,6 +163,7 @@ void Start_Ultrasonic_Read(void *argument);
 void Start_GPS(void *argument);
 void StartTask06(void *argument);
 void Start_Rec_Transmit(void *argument);
+void StartTask07(void *argument);
 
 /* USER CODE BEGIN PFP */
 //A.hamid states functions turns ono and off leds and lcds
@@ -186,7 +194,7 @@ float Destination_Longitude=31.3488351;
 float Destination_Latitude=30.0591282;
 int Check_Front_Obs=0;
 
-char rx_data[20]; //A.Hamid TEST increased  size, can be reduced again
+char rx_data[10]; //A.Hamid TEST increased  size, can be reduced again
 int Flag_Rec =0;
 int Flag_obstacle=0;
 int Flag_Drive=0;
@@ -304,6 +312,9 @@ int main(void)
 
   /* creation of Rec_Data */
   Rec_DataHandle = osThreadNew(Start_Rec_Transmit, NULL, &Rec_Data_attributes);
+
+  /* creation of LED_task */
+  LED_taskHandle = osThreadNew(StartTask07, NULL, &LED_task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -657,13 +668,13 @@ void warning_state(void){//A.hamid
 				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, RESET);
 				// HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, RESET);
 
-				LCD_clearScreen(); /* clear the LCD display */
-				LCD_displayString(" ");
-				LCD_displayStringRowColumn(1,3,"Warning!!");
-        for(int i=0; i<6 ; i++){
+//				LCD_clearScreen(); /* clear the LCD display */
+//				LCD_displayString(" ");
+//				LCD_displayStringRowColumn(1,3,"Warning!!");
+//        for(int i=0; i<6 ; i++){
           HAL_GPIO_TogglePin ( GPIOC, GPIO_PIN_3);
-				osDelay(100);
-        }
+//				osDelay(100);
+//        }
 
 
 				// memset((rx_data), '\0', strlen(rx_data));
@@ -1048,7 +1059,7 @@ void StartTask06(void *argument)
 			}
 		}
 
-		osDelay(5000); //A.Hamid mqtt crashes with high amounts of msgs
+		osDelay(1000); //A.Hamid mqtt crashes with high amounts of msgs
 	}
   /* USER CODE END StartTask06 */
 }
@@ -1067,6 +1078,7 @@ void Start_Rec_Transmit(void *argument)
 	char temp_buffer[20] ={'\0'};
 	for(;;)
 	{
+
 
 		if (Flag_Rec == 1)
 		{
@@ -1087,25 +1099,25 @@ void Start_Rec_Transmit(void *argument)
 //			if (strstr(temp_buffer, "Right"))
 			if (strstr(temp_buffer, "R"))
 			{
-        right_state();
+				vehicle_direction=RIGHT;
 			}
 //			else if( strstr(temp_buffer, "Left"))
 			else if (strstr(temp_buffer, "L"))
 			{
-        left_state();
+				vehicle_direction=LEFT;
 			}
 //			else if (strstr(temp_buffer, "Straight"))
 			else if (strstr(temp_buffer, "S"))
 			{
-        straight_state();
+				vehicle_direction=STRAIGHT;
 			}else{}
 			if (strstr(temp_buffer, "W"))
 			{
-					warning_state();
+				vehicle_state=WARNING;
 
 			}else if(strstr(temp_buffer, "N")){
 
-				safe_state();
+				vehicle_state=SAFE;
       }else{}
 
       memset((temp_buffer), '\0', strlen(temp_buffer)); //A.hamid  // delete all buffer after reading
@@ -1113,6 +1125,80 @@ void Start_Rec_Transmit(void *argument)
 			Flag_Rec=0;
 		}	}
   /* USER CODE END Start_Rec_Transmit */
+}
+
+/* USER CODE BEGIN Header_StartTask07 */
+/**
+* @brief Function implementing the LED_task thread.
+* @param argument: Not used
+* @retval None
+*/
+//A.Hamid
+/* USER CODE END Header_StartTask07 */
+void StartTask07(void *argument)
+{
+  /* USER CODE BEGIN StartTask07 */
+  /* Infinite loop */
+  for(;;)
+  {/*
+
+  vehicle_state
+  vehicle_direction
+  straight_state
+  right_state
+  right_state
+  left_state
+  breaking_state
+  warning_state
+
+SAFE,
+WARNING,
+BRAKING,
+
+
+STRAIGHT,
+LEFT,
+RIGHT
+
+
+  */
+    //A.Hamid Possible BUG LCD
+	  switch(vehicle_direction){
+	  case STRAIGHT:
+	  	  straight_state();
+		  break;
+	  case RIGHT:
+	   	   right_state();
+		   break;
+	  case LEFT:
+			left_state();
+			break;
+	  default:
+		  break;
+
+
+	  }
+	  switch(vehicle_state){
+	  case BRAKING:
+	  	  breaking_state();
+		  break;
+	  case SAFE:
+	   	   safe_state();
+		   break;
+	  case WARNING:
+			warning_state();
+			break;
+	  default:
+		  break;
+
+
+	  }
+
+
+
+    osDelay(100);
+  }
+  /* USER CODE END StartTask07 */
 }
 
 /**
