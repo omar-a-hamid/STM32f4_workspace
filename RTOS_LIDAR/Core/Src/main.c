@@ -660,10 +660,8 @@ void warning_state(void){//A.hamid
 				LCD_clearScreen(); /* clear the LCD display */
 				LCD_displayString(" ");
 				LCD_displayStringRowColumn(1,3,"Warning!!");
-        for(int i=0; i<3 ; i++){
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, SET);
-				osDelay(100);
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, RESET);
+        for(int i=0; i<6 ; i++){
+          HAL_GPIO_TogglePin ( GPIOC, GPIO_PIN_3);
 				osDelay(100);
         }
 
