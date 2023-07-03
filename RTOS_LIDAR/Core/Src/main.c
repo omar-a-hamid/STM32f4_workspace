@@ -1014,8 +1014,8 @@ void StartTask06(void *argument)
 				"\"2\": %d,\n"//obs distance
 				"\"3\": %lu,\n" // left distance
 				"\"4\" :%lu,\n"//right
-				"\"5\": %s,\n" //dest lon
-				"\"6\": %s,\n"
+				"\"5\": %s,\n" //dest lon                           //TODO:
+				"\"6\": %s,\n"                                      //TODO:
         "\"state\": %d,\n"
         "\"direction\": %d\n}\n" // dest lat                 //TEST
 
@@ -1115,7 +1115,7 @@ void Start_Rec_Transmit(void *argument)
 			{
 				vehicle_state=WARNING;
 
-			}else if(strstr(temp_buffer, "N")){
+			}else if(strstr(temp_buffer, "N")){             //TODO: check for braking state
 
 				vehicle_state=SAFE;
       }else{}
